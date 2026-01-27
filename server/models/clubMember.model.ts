@@ -1,45 +1,29 @@
-import mongoose, { Schema, Model } from "mongoose";
+import mongoose, { Schema, Model, Types } from "mongoose";
 
-export interface IClub {
-  name: string;
-  description: string;
-  logo?: string;
-  coverImage?: string;
-  membersCount: number;
-  createdAt?: Date;
-  updatedAt?: Date;
+export type ClubRole = "STUDENT" | "CLUB_ADMIN";
+
+export interface IClubMember {
+  userId: Types.ObjectId;
+  clubId: Types.ObjectId;
+  role: ClubRole;
+  joinedAt: Date;
 }
 
-const ClubSchema = new Schema<IClub>(
-  {
-    name: {
-      type: String,
-      required: true,
-      unique: true,
-      trim: true,
-    },
-    description: {
-      type: String,
-      required: true,
-    },
-    logo: {
-      type: String,
-    },
-    coverImage: {
-      type: String,
-    },
-    membersCount: {
-      type: Number,
-      default: 0,
-    },
+const ClubMemberSchema = new Schema<IClubMember>({
+  userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
+  clubId: { type: Schema.Types.ObjectId, ref: "Club", required: true },
+  role: {
+    type: String,
+    enum: ["STUDENT", "CLUB_ADMIN"],
+    default: "STUDENT",
   },
-  {
-    timestamps: true,
-  }
-);
+  joinedAt: { type: Date, default: Date.now },
+});
 
-// Prevent model overwrite in Next.js hot reload
-const Club: Model<IClub> =
-  mongoose.models.Club || mongoose.model<IClub>("Club", ClubSchema);
+ClubMemberSchema.index({ userId: 1, clubId: 1 }, { unique: true });
 
-export default Club;
+const ClubMember: Model<IClubMember> =
+  mongoose.models.ClubMember ||
+  mongoose.model<IClubMember>("ClubMember", ClubMemberSchema);
+
+export default ClubMember;
