@@ -13,7 +13,7 @@ export const clubMemberRepo = {
 
         const newMember = await ClubMember.create(data);
         if(newMember){
-            await Club.findByIdAndDelete(data.clubId , {
+            await Club.findByIdAndUpdate(data.clubId , {
                 $inc : {membersCount : 1}
             })
         }
@@ -44,7 +44,7 @@ export const clubMemberRepo = {
 
     async listMember(clubId : string){
         await connectMongo();
-        return ClubMember.find({clubId}).populate('userId , name avatar email').lean();
+        return ClubMember.find({clubId}).populate('userId' , 'name avatar email').lean();
     }
 
 }

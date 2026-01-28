@@ -1,6 +1,6 @@
 import mongoose, { Schema, Model, Types } from "mongoose";
 
-export type RSVPStatus = "GOING" | "INTERESTED";
+export type RSVPStatus = "GOING" | "INTERESTED" | "";
 
 export interface IRSVP {
   userId: Types.ObjectId;

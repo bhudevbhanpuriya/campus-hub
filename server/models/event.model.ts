@@ -5,8 +5,8 @@ export interface IEvent {
   description: string;
   date: Date;
   venue: string;
-  clubId: Types.ObjectId;
-  createdBy: Types.ObjectId;
+  clubId: Types.ObjectId | string;
+  createdBy: Types.ObjectId | string;
   tags: string[];
   rsvpCount: number;
   createdAt?: Date;
