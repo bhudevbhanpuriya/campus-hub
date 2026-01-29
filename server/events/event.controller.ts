@@ -1,62 +1,95 @@
-import { NextRequest, NextResponse } from "next/server";
-import { eventService } from "./event.service";
+import { eventRepo } from "./event.repo";
+import { clubService } from "../clubs/club.service";
+import { rsvpRepo } from "./rsvp.repo";
 
-export const eventController = {
-    async createEvent(req: NextRequest) {
-        try {
-            const body = await req.json();
-            const event = await eventService.createEvent(body);
-            return NextResponse.json(event, { status: 201 });
-        } catch (error: any) {
-            return NextResponse.json({ error: error.message }, { status: 400 });
-        }
-    },
+export const eventService = {
+  async createEvent(data: {
+    title: string;
+    description: string;
+    date: Date;
+    venue: string;
+    clubId: string;
+    createdBy: string;
+  }) {
+    const { title, description, date, venue, clubId, createdBy } = data;
 
-    async getEvent(req: NextRequest) {
-        try {
-            const { searchParams } = new URL(req.url);
-            const eventId = searchParams.get("eventId");
-
-            if (!eventId) {
-                return NextResponse.json({ error: "Event ID is required" }, { status: 400 });
-            }
-
-            const event = await eventService.getEvent(eventId);
-            
-            if (!event) {
-                return NextResponse.json({ error: "Event not found" }, { status: 404 });
-            }
-
-            return NextResponse.json(event, { status: 200 });
-        } catch (error: any) {
-            return NextResponse.json({ error: error.message }, { status: 500 });
-        }
-    },
-
-    async listEvents(req: NextRequest) {
-        try {
-            const { searchParams } = new URL(req.url);
-            const clubId = searchParams.get("clubId") || undefined;
-
-            const events = await eventService.listEvents();
-            return NextResponse.json(events, { status: 200 });
-        } catch (error: any) {
-            return NextResponse.json({ error: error.message }, { status: 500 });
-        }
-    },
-
-    async rsvpEvent(req: NextRequest) {
-        try {
-            const { userId, eventId, status } = await req.json();
-
-            if (!userId || !eventId || !status) {
-                return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
-            }
-
-            const event = await eventService.rsvpEvent(userId, eventId, status);
-            return NextResponse.json(event, { status: 200 });
-        } catch (error: any) {
-            return NextResponse.json({ error: error.message }, { status: 400 });
-        }
+    if (!title || !description || !date || !venue || !clubId || !createdBy) {
+      throw new Error("Missing required fields");
     }
-}
+
+    const isAllowed = await clubService.isClubAdmin(createdBy, clubId);
+    if (!isAllowed) {
+      throw new Error("Only club admins can create events");
+    }
+
+    if (new Date(date) < new Date()) {
+      throw new Error("Event date cannot be in the past");
+    }
+
+    const event = await eventRepo.createEvent({
+      title,
+      description,
+      date,
+      venue,
+      clubId,
+      createdBy,
+    });
+
+    return {
+      id: event._id,
+      title: event.title,
+      date: event.date,
+      venue: event.venue,
+    };
+  },
+
+  async getEvent(eventId: string) {
+    if (!eventId) throw new Error("Event ID required");
+
+    const event = await eventRepo.findById(eventId);
+    if (!event) throw new Error("Event not found");
+
+    return event;
+  },
+
+  async listEvents() {
+    return eventRepo.listUpcomingEvents();
+  },
+
+  async rsvpEvent(
+    userId: string,
+    eventId: string,
+    status: "GOING" | "INTERESTED" | "NOT_GOING"
+  ) {
+    if (!userId || !eventId || !status) {
+      throw new Error("Missing required fields");
+    }
+
+    const event = await eventRepo.findById(eventId);
+    if (!event) throw new Error("Event not found");
+
+    // Business rules
+    if (event.createdBy.toString() === userId) {
+      throw new Error("Cannot RSVP to your own event");
+    }
+
+    if (event.date < new Date()) {
+      throw new Error("Event already started");
+    }
+
+    // Upsert RSVP
+    const prevRSVP = await rsvpRepo.findUserRSVP(userId, eventId);
+
+    if (!prevRSVP && status !== "NOT_GOING") {
+      await eventRepo.incrementRsvpCount(eventId);
+    }
+
+    if (prevRSVP && status === "NOT_GOING") {
+      await eventRepo.decrementRsvpCount(eventId);
+    }
+
+    await rsvpRepo.createOrUpdateRSVP({userId, eventId, status});
+
+    return { success: true, status };
+  },
+};

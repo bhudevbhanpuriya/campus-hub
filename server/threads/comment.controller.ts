@@ -2,14 +2,17 @@ import { NextRequest, NextResponse } from "next/server";
 import { commentService } from "./comment.service";
 
 export const commentController = {
-  async createComment(req: NextRequest) {
+  async createComment(
+    req: NextRequest,
+    { params }: { params: { threadId: string } }
+  ) {
     try {
-      const body = await req.json();
-      const { threadId, userId, content, parentCommentId } = body;
+      const { userId, content, parentCommentId } = await req.json();
+      const { threadId } = params;
 
-      if (!threadId || !userId || !content) {
+      if (!userId || !content) {
         return NextResponse.json(
-          { error: "Missing required fields" },
+          { success: false, error: "Missing required fields" },
           { status: 400 }
         );
       }
@@ -18,129 +21,57 @@ export const commentController = {
         threadId,
         userId,
         content,
-        parentCommentId: parentCommentId ?? null,
+        parentCommentId,
       });
 
-      return NextResponse.json(comment, { status: 201 });
-    } catch (error: any) {
       return NextResponse.json(
-        { error: error.message },
-        { status: 500 }
+        { success: true, data: comment },
+        { status: 201 }
+      );
+    } catch (err: any) {
+      return NextResponse.json(
+        { success: false, error: err.message },
+        { status: 400 }
       );
     }
   },
 
-  async voteComment(req: NextRequest) {
+  async listComments(
+    req: NextRequest,
+    { params }: { params: { threadId: string } }
+  ) {
     try {
-      const body = await req.json();
-      const { commentId, userId, vote } = body;
-
-      if (!commentId || !userId || !vote) {
-        return NextResponse.json(
-          { error: "Missing fields" },
-          { status: 400 }
-        );
-      }
-
-      const result = await commentService.voteComment(
-        commentId,
-        userId,
-        vote
+      const comments = await commentService.listRootComments(
+        params.threadId
       );
 
-      return NextResponse.json(result, { status: 200 });
-    } catch (error: any) {
       return NextResponse.json(
-        { error: error.message },
-        { status: 500 }
+        { success: true, data: comments },
+        { status: 200 }
+      );
+    } catch (err: any) {
+      return NextResponse.json(
+        { success: false, error: err.message },
+        { status: 400 }
       );
     }
   },
 
-  async getComment(req: NextRequest) {
+  async listReplies(
+    req: NextRequest,
+    { params }: { params: { commentId: string } }
+  ) {
     try {
-      const { searchParams } = new URL(req.url);
-      const commentId = searchParams.get("commentId");
+      const replies = await commentService.listReplies(params.commentId);
 
-      if (!commentId) {
-        return NextResponse.json(
-          { error: "Comment ID required" },
-          { status: 400 }
-        );
-      }
-
-      const comment = await commentService.getComment(commentId);
-      return NextResponse.json(comment, { status: 200 });
-    } catch (error: any) {
       return NextResponse.json(
-        { error: error.message },
-        { status: 500 }
+        { success: true, data: replies },
+        { status: 200 }
       );
-    }
-  },
-
-  async listComments(req: NextRequest) {
-    try {
-      const { searchParams } = new URL(req.url);
-      const threadId = searchParams.get("threadId");
-
-      if (!threadId) {
-        return NextResponse.json(
-          { error: "Thread ID required" },
-          { status: 400 }
-        );
-      }
-
-      const comments = await commentService.listRootComments(threadId);
-      return NextResponse.json(comments, { status: 200 });
-    } catch (error: any) {
+    } catch (err: any) {
       return NextResponse.json(
-        { error: error.message },
-        { status: 500 }
-      );
-    }
-  },
-
-  async listReplies(req: NextRequest) {
-    try {
-      const { searchParams } = new URL(req.url);
-      const parentCommentId = searchParams.get("parentCommentId");
-
-      if (!parentCommentId) {
-        return NextResponse.json(
-          { error: "Parent Comment ID required" },
-          { status: 400 }
-        );
-      }
-
-      const replies = await commentService.listReplies(parentCommentId);
-      return NextResponse.json(replies, { status: 200 });
-    } catch (error: any) {
-      return NextResponse.json(
-        { error: error.message },
-        { status: 500 }
-      );
-    }
-  },
-
-  async deleteComment(req: NextRequest) {
-    try {
-      const body = await req.json();
-      const { commentId } = body;
-
-      if (!commentId) {
-        return NextResponse.json(
-          { error: "Comment ID required" },
-          { status: 400 }
-        );
-      }
-
-      const result = await commentService.deleteComment(commentId);
-      return NextResponse.json(result, { status: 200 });
-    } catch (error: any) {
-      return NextResponse.json(
-        { error: error.message },
-        { status: 500 }
+        { success: false, error: err.message },
+        { status: 400 }
       );
     }
   },
