@@ -1,8 +1,18 @@
 import connectMongo from "@/lib/mongodb";
 import Comment , {IComment} from "../models/comment.model";  
+import { Types } from "mongoose";
 
 export const commentRepo = {
-    async createComment(data: IComment) {
+    async createComment(data: {
+      threadId: Types.ObjectId | string;
+      userId: Types.ObjectId | string;
+      parentCommentId?: Types.ObjectId | string;
+      content: string;
+      upvotes?: number;
+      downvotes?: number;
+      createdAt?: Date;
+      updatedAt?: Date;
+    }) {
         await connectMongo();
         return Comment.create(data);
     },

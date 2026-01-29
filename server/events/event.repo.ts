@@ -2,7 +2,14 @@ import connectMongo from "@/lib/mongodb";
 import Event , {IEvent} from "../models/event.model";
 
 export const eventRepo = {
-    async createEvent(data : IEvent){
+    async createEvent(data :  {
+    title: string;
+    description: string;
+    date: Date;
+    venue: string;
+    clubId: string;
+    createdBy: string;
+    }){
         await connectMongo();
         const exists =  await Event.findOne({title :data.title ,clubId : data.clubId});
         if(exists) return exists;

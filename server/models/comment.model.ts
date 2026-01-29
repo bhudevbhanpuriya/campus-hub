@@ -1,12 +1,12 @@
 import mongoose, { Schema, Model, Types } from "mongoose";
 
 export interface IComment {
-  threadId: Types.ObjectId;
-  userId: Types.ObjectId;
-  parentCommentId?: Types.ObjectId | null;
+  threadId: Types.ObjectId | string;
+  userId: Types.ObjectId | string;
+  parentCommentId?: Types.ObjectId | string | null;
   content: string;
-  upvotes: number;
-  downvotes: number;
+  upvotes?: number;
+  downvotes?: number;
   createdAt?: Date;
   updatedAt?: Date;
 }

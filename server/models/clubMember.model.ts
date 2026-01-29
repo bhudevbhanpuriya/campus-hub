@@ -3,8 +3,8 @@ import mongoose, { Schema, Model, Types } from "mongoose";
 export type ClubRole = "STUDENT" | "CLUB_ADMIN";
 
 export interface IClubMember {
-  userId: Types.ObjectId;
-  clubId: Types.ObjectId;
+  userId: Types.ObjectId | string;
+  clubId: Types.ObjectId | string;
   role: ClubRole;
   joinedAt: Date;
 }

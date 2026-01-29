@@ -1,10 +1,10 @@
 import mongoose, { Schema, Model, Types } from "mongoose";
 
-export type RSVPStatus = "GOING" | "INTERESTED" | "";
+export type RSVPStatus = "GOING" | "INTERESTED" | "NOT_GOING";
 
 export interface IRSVP {
-  userId: Types.ObjectId;
-  eventId: Types.ObjectId;
+  userId: Types.ObjectId | string;
+  eventId: Types.ObjectId | string;
   status: RSVPStatus;
   createdAt?: Date;
 }
