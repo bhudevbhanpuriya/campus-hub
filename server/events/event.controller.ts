@@ -1,95 +1,123 @@
-import { eventRepo } from "./event.repo";
-import { clubService } from "../clubs/club.service";
-import { rsvpRepo } from "./rsvp.repo";
+import { NextRequest, NextResponse } from "next/server";
+import { eventService } from "./event.service";
 
-export const eventService = {
-  async createEvent(data: {
-    title: string;
-    description: string;
-    date: Date;
-    venue: string;
-    clubId: string;
-    createdBy: string;
-  }) {
-    const { title, description, date, venue, clubId, createdBy } = data;
+export const eventController = {
+  // POST /api/events
+  async createEvent(req: NextRequest) {
+    try {
+      const body = await req.json();
+      const { title, description, date, venue, clubId, createdBy } = body;
 
-    if (!title || !description || !date || !venue || !clubId || !createdBy) {
-      throw new Error("Missing required fields");
+      if (
+        !title ||
+        !description ||
+        !date ||
+        !venue ||
+        !clubId ||
+        !createdBy
+      ) {
+        return NextResponse.json(
+          { success: false, error: "Missing required fields" },
+          { status: 400 }
+        );
+      }
+
+      const event = await eventService.createEvent({
+        title,
+        description,
+        date: new Date(date), // ensure Date type
+        venue,
+        clubId,
+        createdBy,
+      });
+
+      return NextResponse.json(
+        { success: true, data: event },
+        { status: 201 }
+      );
+    } catch (error: any) {
+      return NextResponse.json(
+        { success: false, error: error.message },
+        { status: 400 }
+      );
     }
-
-    const isAllowed = await clubService.isClubAdmin(createdBy, clubId);
-    if (!isAllowed) {
-      throw new Error("Only club admins can create events");
-    }
-
-    if (new Date(date) < new Date()) {
-      throw new Error("Event date cannot be in the past");
-    }
-
-    const event = await eventRepo.createEvent({
-      title,
-      description,
-      date,
-      venue,
-      clubId,
-      createdBy,
-    });
-
-    return {
-      id: event._id,
-      title: event.title,
-      date: event.date,
-      venue: event.venue,
-    };
   },
 
-  async getEvent(eventId: string) {
-    if (!eventId) throw new Error("Event ID required");
-
-    const event = await eventRepo.findById(eventId);
-    if (!event) throw new Error("Event not found");
-
-    return event;
-  },
-
-  async listEvents() {
-    return eventRepo.listUpcomingEvents();
-  },
-
-  async rsvpEvent(
-    userId: string,
-    eventId: string,
-    status: "GOING" | "INTERESTED" | "NOT_GOING"
+  // GET /api/events/:eventId
+  async getEvent(
+    _req: NextRequest,
+    eventId: string
   ) {
-    if (!userId || !eventId || !status) {
-      throw new Error("Missing required fields");
+    try {
+      if (!eventId) {
+        return NextResponse.json(
+          { success: false, error: "Event ID required" },
+          { status: 400 }
+        );
+      }
+
+      const event = await eventService.getEvent(eventId);
+
+      return NextResponse.json(
+        { success: true, data: event },
+        { status: 200 }
+      );
+    } catch (error: any) {
+      return NextResponse.json(
+        { success: false, error: error.message },
+        { status: 404 }
+      );
     }
+  },
 
-    const event = await eventRepo.findById(eventId);
-    if (!event) throw new Error("Event not found");
+  // GET /api/events
+  async listEvents() {
+    try {
+      const events = await eventService.listEvents();
 
-    // Business rules
-    if (event.createdBy.toString() === userId) {
-      throw new Error("Cannot RSVP to your own event");
+      return NextResponse.json(
+        { success: true, data: events },
+        { status: 200 }
+      );
+    } catch (error: any) {
+      return NextResponse.json(
+        { success: false, error: error.message },
+        { status: 500 }
+      );
     }
+  },
 
-    if (event.date < new Date()) {
-      throw new Error("Event already started");
+  // POST /api/events/:eventId/rsvp
+  async rsvpEvent(
+    req: NextRequest,
+    eventId: string
+  ) {
+    try {
+      const body = await req.json();
+      const { userId, status } = body;
+
+      if (!userId || !status) {
+        return NextResponse.json(
+          { success: false, error: "Missing required fields" },
+          { status: 400 }
+        );
+      }
+
+      const result = await eventService.rsvpEvent(
+        userId,
+        eventId,
+        status
+      );
+
+      return NextResponse.json(
+        { success: true, data: result },
+        { status: 200 }
+      );
+    } catch (error: any) {
+      return NextResponse.json(
+        { success: false, error: error.message },
+        { status: 400 }
+      );
     }
-
-    // Upsert RSVP
-    const prevRSVP = await rsvpRepo.findUserRSVP(userId, eventId);
-
-    if (!prevRSVP && status !== "NOT_GOING") {
-      await eventRepo.incrementRsvpCount(eventId);
-    }
-
-    if (prevRSVP && status === "NOT_GOING") {
-      await eventRepo.decrementRsvpCount(eventId);
-    }
-
-    await rsvpRepo.createOrUpdateRSVP({userId, eventId, status});
-
-    return { success: true, status };
   },
 };

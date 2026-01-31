@@ -4,12 +4,11 @@ import { commentService } from "./comment.service";
 export const commentController = {
   async createComment(
     req: NextRequest,
-    { params }: { params: { threadId: string } }
+    threadId: string 
   ) {
     try {
       const { userId, content, parentCommentId } = await req.json();
-      const { threadId } = params;
-
+      
       if (!userId || !content) {
         return NextResponse.json(
           { success: false, error: "Missing required fields" },
@@ -38,11 +37,11 @@ export const commentController = {
 
   async listComments(
     req: NextRequest,
-    { params }: { params: { threadId: string } }
+    threadId : string
   ) {
     try {
       const comments = await commentService.listRootComments(
-        params.threadId
+        threadId
       );
 
       return NextResponse.json(
