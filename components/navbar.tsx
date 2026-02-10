@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { cn } from "@/lib/utils"
 
 const navLinks = [
@@ -15,6 +15,24 @@ const navLinks = [
 export function Navbar() {
   const pathname = usePathname()
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [userName, setUserName] = useState("")
+
+  useEffect(() => {
+    // Check if user is logged in
+    const userId = localStorage.getItem("userId")
+    const storedName = localStorage.getItem("userName")
+    setIsAuthenticated(!!userId)
+    setUserName(storedName || "User")
+  }, [])
+
+  const handleLogout = () => {
+    localStorage.removeItem("userId")
+    localStorage.removeItem("userName")
+    localStorage.removeItem("userEmail")
+    setIsAuthenticated(false)
+    window.location.href = "/"
+  }
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-xl">
@@ -49,13 +67,39 @@ export function Navbar() {
         </div>
 
         <div className="hidden items-center gap-4 md:flex">
-          <div className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-secondary">
-            <img
-              src="https://api.dicebear.com/9.x/avataaars/svg?seed=User"
-              alt="User avatar"
-              className="h-7 w-7 rounded-full"
-            />
-          </div>
+          {isAuthenticated ? (
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-muted-foreground">{userName}</span>
+              <div className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-secondary">
+                <img
+                  src={`https://api.dicebear.com/9.x/avataaars/svg?seed=${userName}`}
+                  alt="User avatar"
+                  className="h-7 w-7 rounded-full"
+                />
+              </div>
+              <button
+                onClick={handleLogout}
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Logout
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-3">
+              <Link
+                href="/auth/login"
+                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Login
+              </Link>
+              <Link
+                href="/auth/register"
+                className="rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-all hover:bg-primary/90"
+              >
+                Sign Up
+              </Link>
+            </div>
+          )}
         </div>
 
         <button
