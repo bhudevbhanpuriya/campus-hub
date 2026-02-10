@@ -79,16 +79,14 @@ export function EventCard({
             </div>
           </div>
           <div className="relative p-6">
-            <div className="flex items-center gap-3">
-              <img
-                src={event.club.avatar || "/placeholder.svg"}
-                alt={event.club.name}
-                className="h-6 w-6 rounded-full"
-              />
-              <span className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
-                {event.club.name}
-              </span>
-            </div>
+           {event.club && (
+            <img
+              src={event.club.avatar || "/placeholder.svg"}
+              alt={event.club.name}
+              className="h-6 w-6 rounded-full"
+            />
+          )}
+
             <h3 className="mt-3 font-serif text-2xl font-bold tracking-tight text-foreground transition-colors group-hover:text-primary lg:text-3xl">
               {event.title}
             </h3>
