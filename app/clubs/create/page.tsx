@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { ImageUpload } from "@/components/ui/image-upload"
 
 const categories = ["Technology", "Arts", "Engineering", "Business", "Environment"]
 
@@ -167,37 +168,21 @@ export default function CreateClubPage() {
                             </select>
                         </div>
 
-                        <div className="grid gap-6 sm:grid-cols-2">
-                            <div className="space-y-2">
-                                <Label htmlFor="logo">Logo URL</Label>
-                                <Input
-                                    id="logo"
-                                    type="url"
-                                    placeholder="https://example.com/logo.png"
-                                    value={formData.logo}
-                                    onChange={(e) =>
-                                        setFormData({ ...formData, logo: e.target.value })
-                                    }
-                                    disabled={loading}
-                                />
-                                <p className="text-xs text-muted-foreground">Optional</p>
-                            </div>
+                        <ImageUpload
+                            label="Club Logo"
+                            value={formData.logo}
+                            onChange={(url) => setFormData({ ...formData, logo: url })}
+                            folder="campus-hub/clubs/logos"
+                            disabled={loading}
+                        />
 
-                            <div className="space-y-2">
-                                <Label htmlFor="coverImage">Cover Image URL</Label>
-                                <Input
-                                    id="coverImage"
-                                    type="url"
-                                    placeholder="https://example.com/cover.png"
-                                    value={formData.coverImage}
-                                    onChange={(e) =>
-                                        setFormData({ ...formData, coverImage: e.target.value })
-                                    }
-                                    disabled={loading}
-                                />
-                                <p className="text-xs text-muted-foreground">Optional</p>
-                            </div>
-                        </div>
+                        <ImageUpload
+                            label="Cover Image"
+                            value={formData.coverImage}
+                            onChange={(url) => setFormData({ ...formData, coverImage: url })}
+                            folder="campus-hub/clubs/covers"
+                            disabled={loading}
+                        />
 
                         <div className="flex gap-4">
                             <Button

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { ImageUpload } from "@/components/ui/image-upload"
 
 export default function CreateEventPage() {
     const router = useRouter()
@@ -15,6 +16,7 @@ export default function CreateEventPage() {
         description: "",
         date: "",
         venue: "",
+        image: "",
         clubId: "",
     })
     const [error, setError] = useState("")
@@ -51,6 +53,8 @@ export default function CreateEventPage() {
                     ...formData,
                     createdBy: userId,
                     date: new Date(formData.date).toISOString(),
+                    // Only include image if provided
+                    image: formData.image || undefined,
                 }),
             })
 
@@ -173,8 +177,15 @@ export default function CreateEventPage() {
                             </div>
                         </div>
 
-                        <div className="space-y-2">
-                            <Label htmlFor="clubId">Club ID *</Label>
+                        <ImageUpload
+                            label="Event Image"
+                            value={formData.image}
+                            onChange={(url) => setFormData({ ...formData, image: url })}
+                            folder="campus-hub/events"
+                            disabled={loading}
+                        />
+
+                        <div className="space-y-2">\n                            <Label htmlFor="clubId">Club ID *</Label>
                             <Input
                                 id="clubId"
                                 type="text"

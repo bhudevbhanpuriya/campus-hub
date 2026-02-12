@@ -5,6 +5,7 @@ export interface IEvent {
   description: string;
   date: Date;
   venue: string;
+  image?: string;
   clubId: Types.ObjectId | string;
   createdBy: Types.ObjectId | string;
   tags: string[];
@@ -19,6 +20,7 @@ const EventSchema = new Schema<IEvent>(
     description: { type: String, required: true },
     date: { type: Date, required: true },
     venue: { type: String, required: true },
+    image: String,
     clubId: { type: Schema.Types.ObjectId, ref: "Club", required: true },
     createdBy: { type: Schema.Types.ObjectId, ref: "User", required: true },
     tags: { type: [String], default: [] },
